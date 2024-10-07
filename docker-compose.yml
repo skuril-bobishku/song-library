@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: music-db
+    environment:
+      POSTGRES_USER: songuser
+      POSTGRES_PASSWORD: songpass
+      POSTGRES_DB: songlib
+    ports:
+      - '8025:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - songlib-net
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      - postgres
+    volumes:
+      - ./schema:/migrations
+    entrypoint:
+      [
+        '/bin/sh',
+        '-c',
+        'sleep 5 && migrate -path /migrations -database postgres://songuser:songpass@postgres:5432/songlib?sslmode=disable up',
+      ]
+    networks:
+      - songlib-net
+
+volumes:
+  pgdata:
+
+networks:
+  songlib-net:
+    driver: bridge
